@@ -402,7 +402,7 @@ dashboardPage(skin = "blue",
                                                                                                 sliderInput("nFolds", label = NULL,
                                                                                                             min = 2, max = 100,
                                                                                                             value = 2))
-                                                                                                            
+
                                                                                       ),
                                                                                       fluidRow(
                                                                                         column(6,h5("Specify the variable to fold data along:"),
@@ -410,7 +410,7 @@ dashboardPage(skin = "blue",
                                                                                         column(6,h5("Keep the variable in the folded dataset?"),
                                                                                               checkboxInput("keepVarInFold", label = NULL, value = FALSE)),
                                                                                       ),
-                                                                                      
+
                                                                                       hr("Bootstrap without resampling is available only for score-based learning"),
                                                                                       fluidRow(column(4,materialSwitch(inputId = "resampling", label = "Disable resampling in bootstrap", status = "primary", right = F), style="margin:30px;")),
                                                                                       fluidRow(

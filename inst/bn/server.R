@@ -5,6 +5,7 @@ library('shinyWidgets')
 library("shinyjs")
 library("shinyBS")
 library('shinyalert')
+library('dbnR')
 library('rintrojs')
 library("HydeNet")
 library("rhandsontable")
@@ -22,6 +23,38 @@ source('tooltip.R')
 source('dashboardthemes.R')
 source('graph.weight.R')
 source('custom.Modules.assoc.R')
+
+originalDiscreteData <<- NULL
+#Blacklisting edges for DBN
+blacklist_edges <- function(colns, timeslices){
+  n_rows = (length(colns)*length(colns)*(timeslices-1)*timeslices)/2;
+  temp <- data.frame(matrix(NA, nrow = n_rows, ncol = 2));
+  colnames(temp) <- c("from", "to")
+
+  indexer <- 1  # for row indexing
+  from_col <- character(nrow(temp))
+  to_col <- character(nrow(temp))
+
+  for (i in 0:(timeslices-2)){
+    #print(paste0("Outer loop: ", i))
+    for(j in (i+1):(timeslices-1)){
+      #print(paste0("    Inner loop: ", j))
+      for (k in colns){
+        for (l in colns){
+          #temp[indexer, ] = c(paste0(k, "_t_", i), paste0(l, "_t_", j))
+          from_col[indexer] <- paste0(k, "_t_", i);
+          to_col[indexer]   <- paste0(l, "_t_", j);
+          indexer <- indexer+1;
+        }
+      }
+    }
+  }
+
+  temp$`from` <- from_col;
+  temp$`to`   <- to_col;
+
+  return(temp)
+}
 
 shinyServer(function(input, output,session) {
   withProgress(message = "checking for dependencies... (may take longer on first installation)", value = 0, {
@@ -187,7 +220,7 @@ shinyServer(function(input, output,session) {
     NetworkGraph <<- NULL
     assocNetwork<<-NULL
     predError<<-NULL
-    for(elem in 1:length(inserted)) 
+    for(elem in 1:length(inserted))
     {
       removeUI(
         ## pass in appropriate div id
@@ -849,6 +882,7 @@ shinyServer(function(input, output,session) {
         check.discrete(DiscreteData)
         check.NA(DiscreteData)
         trueData<<-DiscreteData
+        originalDiscreteData <<- DiscreteData
         #Reset APP
         reset<<-1
         assocReset<<-1
@@ -2644,6 +2678,7 @@ shinyServer(function(input, output,session) {
   observeEvent(input$learnBtn, {
     if(load==2)
     {
+      originalDiscreteData <<- DiscreteData
       if(check.NA(DiscreteData))
       {
         shinyalert::shinyalert("Impute missing data using pre-process tab to procede",type="info")
@@ -2663,6 +2698,52 @@ shinyServer(function(input, output,session) {
 
           # Make sure it closes when we exit this reactive, even if there's an error
           on.exit(progress$close())
+
+          #---------------------------------------------------------
+          #---------------------------------------------------------
+          #                       Added for DBN
+          if(input$isDbnEnabled){
+            # TODO:
+            # 1. Code for blacklisting
+            # 2. Code for Folding
+            # 3. Fix blacklisted elements (ask user to provide explicit timeslice blacklists or cast them into timeslices)
+
+            # TODO: Put blacklisting code in another file
+            id_var <<- input$foldSelect
+
+            #blacklisting
+            blackListColumns <<- colnames(DiscreteData)
+
+            #folding
+            if(id_var == "<<None>>"){
+              folded_df <<- dbnR::fold_dt(DiscreteData,
+                                          size = input$nFolds
+                                          )
+            }
+            else{
+              folded_df <<- dbnR::filtered_fold_dt(DiscreteData,
+                                                size = input$nFolds,
+                                                id_var = input$foldSelect,
+                                                clear_id_var = input$keepVarInFold)
+
+              blackListColumns <<- blackListColumns[blackListColumns != input$foldSelect]
+              if(input$keepVarInFold){
+                #TODO In case we add intra-inter dbnR method
+              }
+            }
+
+            #create blacklist
+            dbn_blacklist <<- blacklist_edges(blackListColumns, input$nFolds)
+            blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
+
+            folded_df <<- as.data.frame(folded_df)
+            DiscreteData <<- folded_df
+
+            bn.start<<- empty.graph(names(DiscreteData))
+
+          }
+
+
           progress$set(message = "Learning network structure", value = 0)
 
           # Get the selected learning algorithm from the user and learn the network
@@ -2688,24 +2769,35 @@ shinyServer(function(input, output,session) {
             {
               if(input$resampling == T)
               {
+                print("one")
                 startG = random.graph(nodes = names(DiscreteData),method = 'melancon',num = input$boot,every = 100,burn.in = 10^5)
+                print("two")
                 netlist = lapply(startG, function(net) {
                   hc(DiscreteData,score = input$algoscore,blacklist=blacklistEdges,whitelist=whitelistEdges,exp = INTvar,iss=input$iss,start = net,cluster = cl)
                 })
+                print("three")
                 bn.hc.boot<<- custom.strength(netlist, nodes = names(DiscreteData))
+                print("four")
               }
               else
               {
+                print("five")
+                print(ncol(DiscreteData))
                 bn.hc.boot <<- boot.strength(data = DiscreteData, R = input$boot, m = ceiling(nrow(DiscreteData)*input$SampleSize), algorithm = input$alg,algorithm.args=list(blacklist=blacklistEdges,whitelist=whitelistEdges,start=bn.start,score = input$algoscore,iss=input$iss,exp = INTvar),cluster = cl)
+                print("six")
               }
             }
             else
             {
               bn.hc.boot <<- boot.strength(data = DiscreteData, R = input$boot, m = ceiling(nrow(DiscreteData)*input$SampleSize), algorithm = input$alg,algorithm.args=list(blacklist=blacklistEdges,whitelist=whitelistEdges),cluster = cl)
             }
+            print("seven")
             bn.hc.boot.pruned <<- bn.hc.boot[bn.hc.boot$strength >= input$edgeStrength & bn.hc.boot$direction >= input$directionStrength,]
+            print("eight")
             bn.hc.boot.average <<- cextend(averaged.network(bn.hc.boot.pruned))
+            print("nine")
             bn.hc.boot.fit <<- bn.fit(bn.hc.boot.average,DiscreteData[,names(bn.hc.boot.average$nodes)],method = input$paramMethod2,cluster = cl)
+            print("ten")
           }
           else
           {
@@ -2873,6 +2965,8 @@ shinyServer(function(input, output,session) {
         })
       }
       tooltip(session)
+    # DiscreteData <<- originalDiscreteData
+    # bn.start<<- empty.graph(names(DiscreteData))
     }
   })
   observeEvent(input$consensus,{
@@ -5450,14 +5544,23 @@ shinyServer(function(input, output,session) {
   })
   observeEvent(input$isDbnEnabled,{
     if (!input$isDbnEnabled){
-      disable(id="nFolds") 
+      #switch back to original DiscreteData
+      if(!is.null(originalDiscreteData)){
+        DiscreteData <<- originalDiscreteData
+        bn.start<<- empty.graph(names(DiscreteData))
+      }
+      disable(id="nFolds")
       disable(id="foldSelect")
       disable(id="keepVarInFold")
     }
     else{
+      #save DiscreteData
+      originalDiscreteData <<- DiscreteData
+      bn.start<<- empty.graph(names(DiscreteData))
       enable(id="nFolds")
       enable(id="foldSelect")
       enable(id="keepVarInFold")
+      blacklistEdges<-c()
     }
   })
 })

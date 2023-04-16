@@ -18,6 +18,10 @@ dependency<-function()
   {
     install.packages("shinyjs")
   }
+  if(require('dbnR') == F)
+  {
+    install.packages("dbnR")
+  }
   if(require('visNetwork')==F)
   {
     install.packages("visNetwork_2.0.9.tar.gz",repos=NULL, type="source")
