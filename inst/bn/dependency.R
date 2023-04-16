@@ -14,6 +14,10 @@ dependency<-function()
   {
     install.packages('parallel')
   }
+  if(require('dplyr') == F)
+  {
+    install.packages("dplyr")
+  }
   if(require('shinyjs') == F)
   {
     install.packages("shinyjs")

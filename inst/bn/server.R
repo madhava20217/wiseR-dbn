@@ -1,5 +1,6 @@
 library('bnlearn')
 library('shiny')
+library('dplyr')
 library('shinydashboard')
 library('shinyWidgets')
 library("shinyjs")
@@ -2735,6 +2736,11 @@ shinyServer(function(input, output,session) {
             #create blacklist
             dbn_blacklist <<- blacklist_edges(blackListColumns, input$nFolds)
             blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
+
+            blacklistEdges <<- blacklistEdges %>% distinct()
+
+            print(class(blacklistEdges))
+
 
             folded_df <<- as.data.frame(folded_df)
             DiscreteData <<- folded_df
