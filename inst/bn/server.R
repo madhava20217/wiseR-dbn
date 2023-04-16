@@ -23,6 +23,36 @@ source('dashboardthemes.R')
 source('graph.weight.R')
 source('custom.Modules.assoc.R')
 
+blacklist_edges <- function(colns, timeslices){
+  n_rows = (length(colns)*length(colns)*(timeslices-1)*timeslices)/2;
+  temp <- data.frame(matrix(NA, nrow = n_rows, ncol = 2));
+  colnames(temp) <- c("from", "to")
+
+  indexer <- 1  # for row indexing
+  from_col <- character(nrow(temp))
+  to_col <- character(nrow(temp))
+
+  for (i in 0:(timeslices-2)){
+    #print(paste0("Outer loop: ", i))
+    for(j in (i+1):(timeslices-1)){
+      #print(paste0("    Inner loop: ", j))
+      for (k in colns){
+        for (l in colns){
+          #temp[indexer, ] = c(paste0(k, "_t_", i), paste0(l, "_t_", j))
+          from_col[indexer] <- paste0(k, "_t_", i);
+          to_col[indexer]   <- paste0(l, "_t_", j);
+          indexer <- indexer+1;
+        }
+      }
+    }
+  }
+
+  temp$`from` <- from_col;
+  temp$`to`   <- to_col;
+
+  return(temp)
+}
+
 shinyServer(function(input, output,session) {
   withProgress(message = "checking for dependencies... (may take longer on first installation)", value = 0, {
     dependency()
@@ -381,6 +411,7 @@ shinyServer(function(input, output,session) {
         file=input$listFile
         if(input$listType=="Blacklist")
         {
+          blacklistEdges <<- c()
           blacklistEdges=read.csv(file$datapath,stringsAsFactors = T,na.strings = c("NA","na","Na","nA","","?","-"))
           blacklistEdges<<-as.data.frame(blacklistEdges)
           if(dim(blacklistEdges)[2]!=2)
@@ -393,6 +424,7 @@ shinyServer(function(input, output,session) {
             blacklistEdges<<-c()
             shinyalert::shinyalert("Upload a correct file containg only nodes as observed in the data",type="error")
           }
+          blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
         }
         else
         {
@@ -854,6 +886,7 @@ shinyServer(function(input, output,session) {
         assocReset<<-1
         load<<-2
         blacklistEdges<<-c()
+        dbn_blacklist <<- c()
         whitelistEdges<<-c()
         externalGraphEdges<<-c()
         INTvar<<-c()
@@ -2658,6 +2691,10 @@ shinyServer(function(input, output,session) {
           if (is.null(DiscreteData))
             return(NULL)
 
+          # BLACKLIST DBN
+          blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
+          blacklistEdges <<- blacklistEdges %>% dplyr::distinct()
+
           # Create a Progress object
           progress <- shiny::Progress$new()
 
@@ -3496,6 +3533,10 @@ shinyServer(function(input, output,session) {
         tryCatch({
           if (is.null(DiscreteData))
             return(NULL)
+
+          # BLACKLIST DBN
+          blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
+          blacklistEdges <<- blacklistEdges %>% dplyr::distinct()
 
           # Create a Progress object
           progress <- shiny::Progress$new()
@@ -5448,16 +5489,134 @@ shinyServer(function(input, output,session) {
       }
     }
   })
-  observeEvent(input$isDbnEnabled,{
-    if (!input$isDbnEnabled){
-      disable(id="nFolds") 
-      disable(id="foldSelect")
-      disable(id="keepVarInFold")
-    }
-    else{
-      enable(id="nFolds")
-      enable(id="foldSelect")
-      enable(id="keepVarInFold")
+  # observeEvent(input$isDbnEnabled,{
+  #   if (!input$isDbnEnabled){
+  #     disable(id="nFolds") 
+  #     disable(id="foldSelect")
+  #     disable(id="keepVarInFold")
+  #   }
+  #   else{
+  #     enable(id="nFolds")
+  #     enable(id="foldSelect")
+  #     enable(id="keepVarInFold")
+  #   }
+  # })
+
+observeEvent(input$foldBtn,{
+    if(load==2)
+    {
+      tryCatch({
+        #FOLDING BEGIN
+
+          id_var <<- input$foldSelect
+          #blacklisting
+          blackListColumns <<- colnames(DiscreteData)
+          #folding
+          if(id_var == "<<None>>"){
+            folded_df <<- dbnR::fold_dt(DiscreteData,
+                                        size = input$nFolds
+                                        )
+          }
+          
+          else{
+            folded_df <<- dbnR::filtered_fold_dt(DiscreteData,
+                                              size = input$nFolds,
+                                              id_var = input$foldSelect,
+                                              clear_id_var = !input$keepVarInFold)
+
+            blackListColumns <<- blackListColumns[blackListColumns != input$foldSelect]
+          }
+          #create blacklist
+          dbn_blacklist <<- blacklist_edges(blackListColumns, input$nFolds)
+          # blacklistEdges <<- blacklistEdges %>% distinct()
+          blacklistEdges <<- dbn_blacklist
+          folded_df <<- as.data.frame(folded_df)
+          DiscreteData <<- folded_df
+
+        #FOLDING END
+        DiscreteData<<-DiscreteData
+        updateSelectInput(session,"delSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"facSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"numSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"freqSelect",choices = names(DiscreteData))
+        output$datasetTable<-DT::renderDataTable({DiscreteData},options = list(scrollX = TRUE,pageLength = 10),selection = list(target = 'column'))
+        reset<<-1
+        weight<<-1
+        value<<-1
+        assocReset<<-1
+        blacklistEdges<<-c()
+        whitelistEdges<<-c()
+        externalGraphEdges<<-c()
+        INTvar<<-c()
+        output$valLoss<<-renderText({0})
+        output$netScore<<-renderText({0})
+        output$assocPlot<<-renderVisNetwork({validate("Explore the association network on your data")})
+        output$netPlot<<-renderVisNetwork({validate("Construct bayesian netowrk for taking decision")})
+        output$parameterPlot<<-renderPlot({validate("Construct bayesian network for taking decision")})
+        output$consensusPlot<-renderPlot({validate("Construct bayesian network(Bootstap Learning) for taking decision")})
+        output$distPlot<<-renderPlot({validate("Construct bayesian network for taking decision")})
+        output$datasetTable<-DT::renderDataTable({DiscreteData},options = list(scrollX = TRUE,pageLength = 10),selection = list(target = 'column'))
+        NetworkGraph <<- NULL
+        assocNetwork<<-NULL
+        predError<<-NULL
+        for(elem in 1:length(inserted))
+        {
+          removeUI(
+            ## pass in appropriate div id
+            selector = paste0('#', inserted[elem])
+          )
+
+        }
+        inserted <<- c()
+        for(elem2 in 1:length(insertedV))
+        {
+          removeUI(
+            ## pass in appropriate div id
+            selector = paste0('#', insertedV[elem2])
+          )
+
+        }
+        insertedV <<- c()
+        rvs$evidence <<- c()
+        rvs$value <<- c()
+        rvs$evidenceObserve <<- c()
+        rvs$valueObserve <<- c()
+        nodeNamesB <<- c()
+        EventNode <<- c()
+        EvidenceNode <<- c()
+        shapeVector<<- c()
+        bn.start<<- empty.graph(names(DiscreteData))
+        communities<<-NULL
+        Acommunities<<-NULL
+        graph<<-NULL
+        updateSelectInput(session,'event',choices = "")
+        updateSelectizeInput(session,'varselect',choices = "")
+        updateSelectInput(session,'paramSelect',choices = "")
+        updateSelectInput(session,"moduleSelection",choices = "")
+        updateSelectInput(session,"neighbornodes",choices = "")
+        updateSelectInput(session,"Aneighbornodes",choices = "")
+        updateSliderInput(session,"NumBar",min = 1, max = 2,value = 1)
+        updateSelectInput(session,"freqSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"delSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"facSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"numSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"fromarc",choices=c())
+        updateSelectInput(session,"toarc",choices = c())
+        updateSelectInput(session,"fromarc1",choices = names(DiscreteData))
+        updateSelectInput(session,'modGroup',choices = "")
+        updateSelectInput(session,'AmodGroup',choices = "")
+        updateSelectInput(session,"AmoduleSelection",choices = "")
+        updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
+        output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
+        output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
+        output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
+        bn.start<<- empty.graph(names(DiscreteData))
+        output$priorout<-DT::renderDataTable({bn.start$arcs},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
+      },error=function(e){
+
+      })
+      tooltip(session)
     }
   })
 })

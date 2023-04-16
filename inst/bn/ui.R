@@ -173,6 +173,19 @@ dashboardPage(skin = "blue",
                                                                                     shiny::h4("Specify Intervention Variable"),
                                                                                     shiny::fluidRow(shiny::column(4,selectInput('intSelect',label = NULL,"")),shiny::column(8,actionButton('intervention','Select', class = "butt")))
                                                                                 ),
+                                                                                hr(),
+                                                                                      useShinyjs(),
+                                                                                      h4("Folding for Time-Series Data"),
+                                                                                      fluidRow(
+                                                                                        column(6,sliderInput("nFolds", label = "Number of Folds:",
+                                                                                                            min = 2, max = 100,
+                                                                                                            value = 2)),
+                                                                                        column(6,selectInput('foldSelect',label = "Specify the variable to fold data along:", "<<None>>")),
+                                                                                      ),
+                                                                                      fluidRow(
+                                                                                        column(6,checkboxInput("keepVarInFold", label = "Keep the variable in the folded dataset?", value = FALSE)),
+                                                                                        column(6, actionButton('foldBtn', 'Fold', class = "butt")),
+                                                                                      ),
                                                                                 label = "Pre-Process",circle = F, status = "primary", icon = icon("edit"), width = "500px",tooltip = tooltipOptions(title = "prepare data for bayesian network analysis")
                                                                               )),
                                                                               shiny::column(2, downloadButton("downloadDataset", "Download", class = "butt"))),
@@ -391,25 +404,6 @@ dashboardPage(skin = "blue",
                                                                                       h5("Use Expert Knowledge by Forcing/Prohibiting Edges"),
                                                                                       shiny::fluidRow(shiny::column(6,selectInput("listType",label = NULL,choices = c("Blacklist","Whitelist"))),shiny::column(6,shiny::fileInput('listFile',label = NULL,accept = c('.csv')))),
 
-                                                                                      hr(),
-                                                                                      useShinyjs(),
-                                                                                      h4("Dynamic Bayesian Networks for Time-Series Structure Learning"),
-                                                                                      fluidRow(
-                                                                                        column(6,h5("Dynamic Bayesian Network Learning"),
-                                                                                                checkboxInput("isDbnEnabled", label = NULL,
-                                                                                                            value = FALSE)),
-                                                                                        column(6,h5("Number of Folds:"),
-                                                                                                sliderInput("nFolds", label = NULL,
-                                                                                                            min = 2, max = 100,
-                                                                                                            value = 2))
-                                                                                                            
-                                                                                      ),
-                                                                                      fluidRow(
-                                                                                        column(6,h5("Specify the variable to fold data along:"),
-                                                                                              selectInput('foldSelect',label = NULL, "<<None>>")),
-                                                                                        column(6,h5("Keep the variable in the folded dataset?"),
-                                                                                              checkboxInput("keepVarInFold", label = NULL, value = FALSE)),
-                                                                                      ),
                                                                                       
                                                                                       hr("Bootstrap without resampling is available only for score-based learning"),
                                                                                       fluidRow(column(4,materialSwitch(inputId = "resampling", label = "Disable resampling in bootstrap", status = "primary", right = F), style="margin:30px;")),
