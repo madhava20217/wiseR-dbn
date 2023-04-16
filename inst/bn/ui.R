@@ -1,5 +1,6 @@
 library('bnlearn')
 library('shiny')
+library('shinyjs')
 library('shinydashboard')
 library('visNetwork')
 library('shinyWidgets')
@@ -25,6 +26,7 @@ source('dependency.R')
 
 myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
                                .list = NULL) {
+
   items <- c(list(...), .list)
   # lapply(items, tagAssert, type = "li", class = "dropdown")
   titleWidth <- validateCssUnit(titleWidth)
@@ -388,6 +390,20 @@ dashboardPage(skin = "blue",
                                                                                       ),
                                                                                       h5("Use Expert Knowledge by Forcing/Prohibiting Edges"),
                                                                                       shiny::fluidRow(shiny::column(6,selectInput("listType",label = NULL,choices = c("Blacklist","Whitelist"))),shiny::column(6,shiny::fileInput('listFile',label = NULL,accept = c('.csv')))),
+
+                                                                                      hr(),
+                                                                                      useShinyjs(),
+                                                                                      h4("Dynamic Bayesian Networks for Time-Series Structure Learning"),
+                                                                                      fluidRow(
+                                                                                        column(6,h5("Dynamic Bayesian Network Learning"),
+                                                                                                checkboxInput("isDbnEnabled", label = NULL,
+                                                                                                            value = FALSE)),
+                                                                                        column(6,h5("Number of Folds:"),
+                                                                                                sliderInput("nFolds", label = NULL,
+                                                                                                            min = 2, max = 100,
+                                                                                                            value = 2))
+                                                                                      ),
+                                                                                      
                                                                                       hr("Bootstrap without resampling is available only for score-based learning"),
                                                                                       fluidRow(column(4,materialSwitch(inputId = "resampling", label = "Disable resampling in bootstrap", status = "primary", right = F), style="margin:30px;")),
                                                                                       fluidRow(

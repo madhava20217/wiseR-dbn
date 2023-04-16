@@ -14,6 +14,10 @@ dependency<-function()
   {
     install.packages('parallel')
   }
+  if(require('shinyjs') == F)
+  {
+    install.packages("shinyjs")
+  }
   if(require('visNetwork')==F)
   {
     install.packages("visNetwork_2.0.9.tar.gz",repos=NULL, type="source")

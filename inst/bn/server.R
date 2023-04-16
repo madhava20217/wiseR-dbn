@@ -2,6 +2,7 @@ library('bnlearn')
 library('shiny')
 library('shinydashboard')
 library('shinyWidgets')
+library("shinyjs")
 library("shinyBS")
 library('shinyalert')
 library('rintrojs')
@@ -5432,6 +5433,14 @@ shinyServer(function(input, output,session) {
       {
         shinyalert::shinyalert("Enter a dashboard name",type="error")
       }
+    }
+  })
+  observeEvent(input$isDbnEnabled,{
+    if (!input$isDbnEnabled){
+      disable(id="nFolds")  
+    }
+    else{
+      enable(id="nFolds") 
     }
   })
 })
