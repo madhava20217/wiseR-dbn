@@ -9,6 +9,7 @@ library('rintrojs')
 library('igraph')
 library("HydeNet")
 library("rhandsontable")
+library("parallel")         # for thresholding parallelism in the dropdown
 source('error.bar.R')
 source('graph.custom.R')
 source('graph.custom.assoc.R')
@@ -104,7 +105,7 @@ dashboardPage(skin = "blue",
                                                                  tabPanel("App Settings",
                                                                           shiny::fluidRow(
                                                                             column(3,materialSwitch(inputId = "parallel", label = "Enable Parallel Computing", status = "primary", right = TRUE), style="margin:30px;"),
-                                                                            column(3,selectInput("clusters",choices = c(1:20),label = "Number of clusters")))
+                                                                            column(3,selectInput("clusters",choices = c(1:detectCores()),label = "Number of clusters")))
                                                                  ),
                                                                  tabPanel('Data',
 
