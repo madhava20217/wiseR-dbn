@@ -187,7 +187,7 @@ shinyServer(function(input, output,session) {
     NetworkGraph <<- NULL
     assocNetwork<<-NULL
     predError<<-NULL
-    for(elem in 1:length(inserted))
+    for(elem in 1:length(inserted)) 
     {
       removeUI(
         ## pass in appropriate div id
@@ -231,6 +231,7 @@ shinyServer(function(input, output,session) {
     updateSelectInput(session,"facSelect",choices = names(DiscreteData))
     updateSelectInput(session,"numSelect",choices = names(DiscreteData))
     updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+    updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
     updateSelectInput(session,"fromarc",choices=c())
     updateSelectInput(session,"toarc",choices = c())
     updateSelectInput(session,"fromarc1",choices = names(DiscreteData))
@@ -326,6 +327,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,"numSelect",choices = names(DiscreteData))
         updateSelectInput(session,"facSelect",choices = names(DiscreteData))
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         updateSelectInput(session,"fromarc",choices=c())
         updateSelectInput(session,"toarc",choices = c())
         updateSelectInput(session,"fromarc1",choices = names(DiscreteData))
@@ -856,6 +858,7 @@ shinyServer(function(input, output,session) {
         externalGraphEdges<<-c()
         INTvar<<-c()
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         output$valLoss<<-renderText({0})
         output$netScore<<-renderText({0})
         output$assocPlot<<-renderVisNetwork({validate("Explore the association network on your data")})
@@ -1008,6 +1011,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,'modGroup',choices = "")
         updateSelectInput(session,'AmodGroup',choices = "")
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         updateSelectInput(session,"AmoduleSelection",choices = "")
         output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
@@ -1102,6 +1106,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,'modGroup',choices = "")
         updateSelectInput(session,'AmodGroup',choices = "")
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         updateSelectInput(session,"AmoduleSelection",choices = "")
         output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
@@ -1237,6 +1242,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,'modGroup',choices = "")
         updateSelectInput(session,'AmodGroup',choices = "")
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         updateSelectInput(session,"AmoduleSelection",choices = "")
         output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
@@ -1376,6 +1382,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,'modGroup',choices = "")
         updateSelectInput(session,'AmodGroup',choices = "")
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         updateSelectInput(session,"AmoduleSelection",choices = "")
         output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
@@ -1505,6 +1512,7 @@ shinyServer(function(input, output,session) {
             updateSelectInput(session,'modGroup',choices = "")
             updateSelectInput(session,'AmodGroup',choices = "")
             updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+            updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
             updateSelectInput(session,"AmoduleSelection",choices = "")
             output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
             output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
@@ -1587,6 +1595,7 @@ shinyServer(function(input, output,session) {
           Acommunities<<-NULL
           graph<<-NULL
           updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+          updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
           updateSelectInput(session,'event',choices = "")
           updateSelectizeInput(session,'varselect',choices = "")
           updateSelectInput(session,'paramSelect',choices = "")
@@ -1693,6 +1702,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,'AmodGroup',choices = "")
         updateSelectInput(session,"AmoduleSelection",choices = "")
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         output$priorout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
@@ -1776,6 +1786,7 @@ shinyServer(function(input, output,session) {
       updateSelectInput(session,"fromarc",choices=c())
       updateSelectInput(session,"toarc",choices = c())
       updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+      updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
       updateSelectInput(session,"fromarc1",choices = names(DiscreteData))
       updateSelectInput(session,'modGroup',choices = "")
       updateSelectInput(session,'AmodGroup',choices = "")
@@ -1862,6 +1873,7 @@ shinyServer(function(input, output,session) {
         updateSelectInput(session,'modGroup',choices = "")
         updateSelectInput(session,'AmodGroup',choices = "")
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+        updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
         updateSelectInput(session,"AmoduleSelection",choices = "")
         output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
         bn.start<<- empty.graph(names(DiscreteData))
@@ -1963,6 +1975,7 @@ shinyServer(function(input, output,session) {
             updateSelectInput(session,'modGroup',choices = "")
             updateSelectInput(session,'AmodGroup',choices = "")
             updateSelectInput(session,"intSelect",choices = names(DiscreteData))
+            updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
             updateSelectInput(session,"AmoduleSelection",choices = "")
             output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
             bn.start<<- empty.graph(names(DiscreteData))
@@ -5437,10 +5450,14 @@ shinyServer(function(input, output,session) {
   })
   observeEvent(input$isDbnEnabled,{
     if (!input$isDbnEnabled){
-      disable(id="nFolds")  
+      disable(id="nFolds") 
+      disable(id="foldSelect")
+      disable(id="keepVarInFold")
     }
     else{
-      enable(id="nFolds") 
+      enable(id="nFolds")
+      enable(id="foldSelect")
+      enable(id="keepVarInFold")
     }
   })
 })

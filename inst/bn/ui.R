@@ -166,7 +166,7 @@ dashboardPage(skin = "blue",
                                                                                     shiny::h4("Sort data frame:"),
                                                                                     actionButton('sort','Arrange Columns', class = "butt")),
                                                                                 div(id="dataDelete",
-                                                                                    shiny::h4("Delete variables"),
+                                                                                    shiny::h4("Delete variables"), # nolint
                                                                                     shiny::fluidRow(shiny::column(6,selectInput('delSelect',label = NULL,"",multiple = T)),shiny::column(3,actionButton('delete','Delete', class = "butt")),shiny::column(3,actionButton('reset','Reset', class = "butt")))
                                                                                 ),
                                                                                 div(id="dataIntervention",
@@ -402,6 +402,13 @@ dashboardPage(skin = "blue",
                                                                                                 sliderInput("nFolds", label = NULL,
                                                                                                             min = 2, max = 100,
                                                                                                             value = 2))
+                                                                                                            
+                                                                                      ),
+                                                                                      fluidRow(
+                                                                                        column(6,h5("Specify the variable to fold data along:"),
+                                                                                              selectInput('foldSelect',label = NULL, "<<None>>")),
+                                                                                        column(6,h5("Keep the variable in the folded dataset?"),
+                                                                                              checkboxInput("keepVarInFold", label = NULL, value = FALSE)),
                                                                                       ),
                                                                                       
                                                                                       hr("Bootstrap without resampling is available only for score-based learning"),
