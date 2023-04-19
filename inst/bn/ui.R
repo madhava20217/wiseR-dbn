@@ -184,7 +184,7 @@ dashboardPage(skin = "blue",
                                                                                       ),
                                                                                       fluidRow(
                                                                                         column(6,checkboxInput("keepVarInFold", label = "Keep the variable in the folded dataset?", value = FALSE)),
-                                                                                        column(6, actionButton('foldBtn', 'Fold', class = "butt")),
+                                                                                        column(6, switchInput('foldBtn', onLabel = 'Fold', offLabel = 'Unfold', value = FALSE, width = NULL )),
                                                                                       ),
                                                                                 label = "Pre-Process",circle = F, status = "primary", icon = icon("edit"), width = "500px",tooltip = tooltipOptions(title = "prepare data for bayesian network analysis")
                                                                               )),

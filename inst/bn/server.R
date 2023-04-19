@@ -16,6 +16,7 @@ source('graph.custom.assoc.R')
 source('custom.discretize.R')
 source('check.NA.R')
 source('check.discrete.R')
+source('blacklist_edges.R')
 source('custom.association.R')
 source('custom.Modules.R')
 source('tooltip.R')
@@ -23,35 +24,6 @@ source('dashboardthemes.R')
 source('graph.weight.R')
 source('custom.Modules.assoc.R')
 
-blacklist_edges <- function(colns, timeslices){
-  n_rows = (length(colns)*length(colns)*(timeslices-1)*timeslices)/2;
-  temp <- data.frame(matrix(NA, nrow = n_rows, ncol = 2));
-  colnames(temp) <- c("from", "to")
-
-  indexer <- 1  # for row indexing
-  from_col <- character(nrow(temp))
-  to_col <- character(nrow(temp))
-
-  for (i in 0:(timeslices-2)){
-    #print(paste0("Outer loop: ", i))
-    for(j in (i+1):(timeslices-1)){
-      #print(paste0("    Inner loop: ", j))
-      for (k in colns){
-        for (l in colns){
-          #temp[indexer, ] = c(paste0(k, "_t_", i), paste0(l, "_t_", j))
-          from_col[indexer] <- paste0(k, "_t_", i);
-          to_col[indexer]   <- paste0(l, "_t_", j);
-          indexer <- indexer+1;
-        }
-      }
-    }
-  }
-
-  temp$`from` <- from_col;
-  temp$`to`   <- to_col;
-
-  return(temp)
-}
 
 shinyServer(function(input, output,session) {
   withProgress(message = "checking for dependencies... (may take longer on first installation)", value = 0, {
@@ -101,7 +73,9 @@ shinyServer(function(input, output,session) {
   communities<-NULL
   Acommunities<-NULL
   graph<-NULL
-  blacklistEdges<-c()
+  dbn_blacklist<<-c()
+  OldDiscreteData<<-c()
+  blacklistEdges<<-c()
   whitelistEdges<-c()
   externalGraphEdges<-c()
   INTvar<-c()
@@ -200,6 +174,8 @@ shinyServer(function(input, output,session) {
     reset<<-1
     load<<-2
     assocReset<<-1
+    dbn_blacklist<<-c()
+    OldDiscreteData<<-DiscreteData
     blacklistEdges<<-c()
     whitelistEdges<<-c()
     externalGraphEdges<<-c()
@@ -262,6 +238,7 @@ shinyServer(function(input, output,session) {
     updateSelectInput(session,"numSelect",choices = names(DiscreteData))
     updateSelectInput(session,"intSelect",choices = names(DiscreteData))
     updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
+    updateSwitchInput(session,"foldBtn", value = FALSE)
     updateSelectInput(session,"fromarc",choices=c())
     updateSelectInput(session,"toarc",choices = c())
     updateSelectInput(session,"fromarc1",choices = names(DiscreteData))
@@ -407,11 +384,12 @@ shinyServer(function(input, output,session) {
   observeEvent(input$listFile,{
     if(load==2)
     {
+      
       tryCatch({
         file=input$listFile
         if(input$listType=="Blacklist")
         {
-          blacklistEdges <<- c()
+          blacklistEdges<<- c()
           blacklistEdges=read.csv(file$datapath,stringsAsFactors = T,na.strings = c("NA","na","Na","nA","","?","-"))
           blacklistEdges<<-as.data.frame(blacklistEdges)
           if(dim(blacklistEdges)[2]!=2)
@@ -886,12 +864,14 @@ shinyServer(function(input, output,session) {
         assocReset<<-1
         load<<-2
         blacklistEdges<<-c()
-        dbn_blacklist <<- c()
+        dbn_blacklist<<-c()
+        OldDiscreteData<<-DiscreteData
         whitelistEdges<<-c()
         externalGraphEdges<<-c()
         INTvar<<-c()
         updateSelectInput(session,"intSelect",choices = names(DiscreteData))
         updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
+        updateSwitchInput(session,"foldBtn", value = FALSE)
         output$valLoss<<-renderText({0})
         output$netScore<<-renderText({0})
         output$assocPlot<<-renderVisNetwork({validate("Explore the association network on your data")})
@@ -1663,6 +1643,10 @@ shinyServer(function(input, output,session) {
       tryCatch({
         DiscreteData[,input$delSelect]=NULL
         DiscreteData<<-DiscreteData
+
+        # Dropping the from and to rows that contain the deleted column names.
+        dbn_blacklist<<-dbn_blacklist[!(dbn_blacklist$from %in% input$delSelect) & !(dbn_blacklist$to %in% input$delSelect), ]
+
         updateSelectInput(session,"delSelect",choices = names(DiscreteData))
         updateSelectInput(session,"facSelect",choices = names(DiscreteData))
         updateSelectInput(session,"numSelect",choices = names(DiscreteData))
@@ -1948,6 +1932,8 @@ shinyServer(function(input, output,session) {
             value<<-1
             assocReset<<-1
             blacklistEdges<<-c()
+            dbn_blacklist<<-c()
+            OldDiscreteData<<-DiscreteData
             whitelistEdges<<-c()
             externalGraphEdges<<-c()
             output$valLoss<<-renderText({0})
@@ -2009,6 +1995,7 @@ shinyServer(function(input, output,session) {
             updateSelectInput(session,'AmodGroup',choices = "")
             updateSelectInput(session,"intSelect",choices = names(DiscreteData))
             updateSelectInput(session,"foldSelect",choices = c("<<None>>", names(DiscreteData)))
+            updateSwitchInput(session, 'foldBtn', value = FALSE)
             updateSelectInput(session,"AmoduleSelection",choices = "")
             output$postout<-DT::renderDataTable({NULL},options = list(scrollX = TRUE,pageLength = 10),selection = 'single')
             bn.start<<- empty.graph(names(DiscreteData))
@@ -2691,9 +2678,16 @@ shinyServer(function(input, output,session) {
           if (is.null(DiscreteData))
             return(NULL)
 
+          print("blacklistEdges:")
+          print(blacklistEdges)
+
           # BLACKLIST DBN
-          blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
-          blacklistEdges <<- blacklistEdges %>% dplyr::distinct()
+          blacklistEdges<<-rbind(blacklistEdges, dbn_blacklist)
+          if(!is.null(blacklistEdges))
+            blacklistEdges<<-blacklistEdges %>% dplyr::distinct()
+
+          print("blacklistEdges - After:")
+          print(blacklistEdges)
 
           # Create a Progress object
           progress <- shiny::Progress$new()
@@ -5505,9 +5499,10 @@ shinyServer(function(input, output,session) {
 observeEvent(input$foldBtn,{
     if(load==2)
     {
+      dofold <<- input$foldBtn
       tryCatch({
-        #FOLDING BEGIN
-
+        if(dofold){
+          #FOLDING BEGIN
           id_var <<- input$foldSelect
           #blacklisting
           blackListColumns <<- colnames(DiscreteData)
@@ -5528,10 +5523,20 @@ observeEvent(input$foldBtn,{
           }
           #create blacklist
           dbn_blacklist <<- blacklist_edges(blackListColumns, input$nFolds)
-          # blacklistEdges <<- blacklistEdges %>% distinct()
-          blacklistEdges <<- dbn_blacklist
           folded_df <<- as.data.frame(folded_df)
+
+          OldDiscreteData <<- DiscreteData
           DiscreteData <<- folded_df
+        }
+        else
+        {
+          if(!is.null(OldDiscreteData))
+          {
+            DiscreteData <<- OldDiscreteData
+          }
+          dbn_blacklist <<- c()
+        }
+        # print(dbn_blacklist)
 
         #FOLDING END
         DiscreteData<<-DiscreteData
