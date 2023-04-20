@@ -1819,6 +1819,11 @@ shinyServer(function(input, output,session) {
     {
       tryCatch({
         DiscreteData<<-trueData
+        if(input$foldBtn){
+          OldData<<-DiscreteData
+          updateSwitchInput(session,"foldBtn",value = FALSE)
+          updateSwitchInput(session,"foldBtn",value = TRUE)
+        }
         updateSelectInput(session,"delSelect",choices = names(DiscreteData))
         updateSelectInput(session,"facSelect",choices = names(DiscreteData))
         updateSelectInput(session,"numSelect",choices = names(DiscreteData))
@@ -2024,6 +2029,7 @@ shinyServer(function(input, output,session) {
       else
       {
         tryCatch({
+          # !!!!!!!!
           val = table(DiscreteData[,input$freqSelect])/nrow(DiscreteData)
           output$freqPlot = renderPlot({par(mar=c(5,3,3,3))
             par(oma=c(5,3,3,3))
@@ -5502,6 +5508,9 @@ observeEvent(input$foldBtn,{
       dofold <<- input$foldBtn
       tryCatch({
         if(dofold){
+          disable(id="nFolds")
+          disable(id="foldSelect")
+          disable(id="keepVarInFold")
           #FOLDING BEGIN
           id_var <<- input$foldSelect
           #blacklisting
@@ -5530,6 +5539,9 @@ observeEvent(input$foldBtn,{
         }
         else
         {
+          enable(id="nFolds")
+          enable(id="foldSelect")
+          enable(id="keepVarInFold")
           if(!is.null(OldDiscreteData))
           {
             DiscreteData <<- OldDiscreteData
