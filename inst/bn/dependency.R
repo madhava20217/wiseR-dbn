@@ -10,6 +10,10 @@ dependency<-function()
   {
     install.packages("igraph", type = "binary")
   }
+  if(require('parallel') == F)
+  {
+    install.packages('parallel')
+  }
   if(require('visNetwork')==F)
   {
     install.packages("visNetwork_2.0.9.tar.gz",repos=NULL, type="source")
