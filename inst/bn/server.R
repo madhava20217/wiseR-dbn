@@ -2684,16 +2684,16 @@ shinyServer(function(input, output,session) {
           if (is.null(DiscreteData))
             return(NULL)
 
-          print("blacklistEdges:")
-          print(blacklistEdges)
+          # print("blacklistEdges:")
+          # print(blacklistEdges)
 
           # BLACKLIST DBN
           blacklistEdges<<-rbind(blacklistEdges, dbn_blacklist)
           if(!is.null(blacklistEdges))
             blacklistEdges<<-blacklistEdges %>% dplyr::distinct()
 
-          print("blacklistEdges - After:")
-          print(blacklistEdges)
+          # print("blacklistEdges - After:")
+          # print(blacklistEdges)
 
           # Create a Progress object
           progress <- shiny::Progress$new()
