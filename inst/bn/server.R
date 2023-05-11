@@ -3536,7 +3536,8 @@ shinyServer(function(input, output,session) {
 
           # BLACKLIST DBN
           blacklistEdges <<- rbind(blacklistEdges, dbn_blacklist)
-          blacklistEdges <<- blacklistEdges %>% dplyr::distinct()
+          if(!is.null(blacklistEdges))
+            blacklistEdges<<-blacklistEdges %>% dplyr::distinct()
 
           # Create a Progress object
           progress <- shiny::Progress$new()

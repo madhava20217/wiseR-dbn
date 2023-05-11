@@ -6,6 +6,10 @@ dependency<-function()
   {
     BiocManager::install('graph')
   }
+  if(require('ranger')==F)
+  {
+    install.packages('ranger')
+  }
   if(require('igraph')==F)
   {
     install.packages("igraph", type = "binary")
