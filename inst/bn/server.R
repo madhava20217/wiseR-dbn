@@ -1820,7 +1820,7 @@ shinyServer(function(input, output,session) {
       tryCatch({
         DiscreteData<<-trueData
         if(input$foldBtn){
-          OldData<<-DiscreteData
+          OldDiscreteData<<-DiscreteData
           updateSwitchInput(session,"foldBtn",value = FALSE)
           updateSwitchInput(session,"foldBtn",value = TRUE)
         }
