@@ -1,5 +1,6 @@
 library('bnlearn')
 library('shiny')
+library('shinyjs')
 library('shinydashboard')
 library('visNetwork')
 library('shinyWidgets')
@@ -25,6 +26,7 @@ source('dependency.R')
 
 myDashboardHeader <- function (..., title = NULL, titleWidth = NULL, disable = FALSE,
                                .list = NULL) {
+
   items <- c(list(...), .list)
   # lapply(items, tagAssert, type = "li", class = "dropdown")
   titleWidth <- validateCssUnit(titleWidth)
@@ -164,13 +166,26 @@ dashboardPage(skin = "blue",
                                                                                     shiny::h4("Sort data frame:"),
                                                                                     actionButton('sort','Arrange Columns', class = "butt")),
                                                                                 div(id="dataDelete",
-                                                                                    shiny::h4("Delete variables"),
+                                                                                    shiny::h4("Delete variables"), # nolint
                                                                                     shiny::fluidRow(shiny::column(6,selectInput('delSelect',label = NULL,"",multiple = T)),shiny::column(3,actionButton('delete','Delete', class = "butt")),shiny::column(3,actionButton('reset','Reset', class = "butt")))
                                                                                 ),
                                                                                 div(id="dataIntervention",
                                                                                     shiny::h4("Specify Intervention Variable"),
                                                                                     shiny::fluidRow(shiny::column(4,selectInput('intSelect',label = NULL,"")),shiny::column(8,actionButton('intervention','Select', class = "butt")))
                                                                                 ),
+                                                                                hr(),
+                                                                                      useShinyjs(),
+                                                                                      h4("Folding for Time-Series Data"),
+                                                                                      fluidRow(
+                                                                                        column(6,sliderInput("nFolds", label = "Number of Folds:",
+                                                                                                            min = 2, max = 100,
+                                                                                                            value = 2)),
+                                                                                        column(6,selectInput('foldSelect',label = "Specify the variable to fold data along:", "<<None>>")),
+                                                                                      ),
+                                                                                      fluidRow(
+                                                                                        column(6,checkboxInput("keepVarInFold", label = "Keep the variable in the folded dataset?", value = FALSE)),
+                                                                                        column(6, switchInput('foldBtn', onLabel = 'Fold', offLabel = 'Unfold', value = FALSE, width = NULL )),
+                                                                                      ),
                                                                                 label = "Pre-Process",circle = F, status = "primary", icon = icon("edit"), width = "500px",tooltip = tooltipOptions(title = "prepare data for bayesian network analysis")
                                                                               )),
                                                                               shiny::column(2, downloadButton("downloadDataset", "Download", class = "butt"))),
@@ -388,6 +403,8 @@ dashboardPage(skin = "blue",
                                                                                       ),
                                                                                       h5("Use Expert Knowledge by Forcing/Prohibiting Edges"),
                                                                                       shiny::fluidRow(shiny::column(6,selectInput("listType",label = NULL,choices = c("Blacklist","Whitelist"))),shiny::column(6,shiny::fileInput('listFile',label = NULL,accept = c('.csv')))),
+
+                                                                                      
                                                                                       hr("Bootstrap without resampling is available only for score-based learning"),
                                                                                       fluidRow(column(4,materialSwitch(inputId = "resampling", label = "Disable resampling in bootstrap", status = "primary", right = F), style="margin:30px;")),
                                                                                       fluidRow(
