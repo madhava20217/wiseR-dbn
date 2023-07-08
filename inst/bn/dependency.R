@@ -6,6 +6,10 @@ dependency<-function()
   {
     BiocManager::install('graph')
   }
+  if(require('dbnR')==F)
+  {
+    install.packages('dbnR')
+  }
   if(require('ranger')==F)
   {
     install.packages('ranger')
